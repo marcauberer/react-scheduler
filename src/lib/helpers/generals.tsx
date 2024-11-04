@@ -125,7 +125,7 @@ export const differenceInDaysOmitTime = (start: Date, end: Date) => {
   return differenceInDays(endOfDay(addSeconds(end, -1)), startOfDay(start));
 };
 
-export const getRecurrencesForDate = (event: ProcessedEvent, today: Date) => {
+export const getRecurrencesForDate = (event: ProcessedEvent, today: Date, timeZone?: string) => {
   const duration = differenceInMilliseconds(event.end, event.start);
   if (event.recurring) {
     return event.recurring
@@ -135,9 +135,10 @@ export const getRecurrencesForDate = (event: ProcessedEvent, today: Date) => {
         recurrenceId: index,
         start: d,
         end: addMilliseconds(d, duration),
-      }));
+      }))
+      .map((event) => convertEventTimeZone(event, timeZone));
   }
-  return [event];
+  return [convertEventTimeZone(event, timeZone)];
 };
 
 export const filterTodayEvents = (
@@ -148,9 +149,7 @@ export const filterTodayEvents = (
   const list: ProcessedEvent[] = [];
 
   for (let i = 0; i < events.length; i++) {
-    const event = convertEventTimeZone(events[i], timeZone);
-
-    for (const rec of getRecurrencesForDate(event, today)) {
+    for (const rec of getRecurrencesForDate(events[i], today, timeZone)) {
       const isToday =
         !rec.allDay && isSameDay(today, rec.start) && !differenceInDaysOmitTime(rec.start, rec.end);
       if (isToday) {
